@@ -62,5 +62,3 @@ def insertRows(insertStatementsList) :
 
 def selectRows(selectionQuery, param) :
      return cur.execute(selectionQuery)
-
-createDbSchema('schema.sql', False)
