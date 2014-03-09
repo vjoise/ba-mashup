@@ -10,6 +10,7 @@ import csv
 from bs4 import BeautifulSoup
 
 import os, datetime
+import csv
  
 #yahoo finance api link here
 YAHOO_FINANCE_BASE_URL = 'http://ichart.yahoo.com/table.csv?g=w&ignore=.csv'
