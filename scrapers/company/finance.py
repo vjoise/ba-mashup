@@ -33,6 +33,13 @@ def getCompanyProfileData(stockSymbol):
  
 #this appends s=GOOG with interval of dates(start, end) a=0&b=1&c=2000&d=0&e=31&f=2010 to the above url.
 def getFinanceData(stockSymbol, startDate, endDate):
+    
+    # DIRECTORY PATH 
+    MARKET_DATA_DIR = '../../csv_data/companies/MARKET/';
+    COMPETITORS     = '../../csv_data/companies/COMPETITORS/';
+
+    ###########STOCK INFO##################
+
     #The parameters expected by YHOE finance api are as follows:
     a=startDate.split("-")[0];
     b=startDate.split("-")[1];
@@ -47,8 +54,7 @@ def getFinanceData(stockSymbol, startDate, endDate):
     print url
     return requestForData(url);
     
-MARKET_DATA_DIR = '../../csv_data/companies/MARKET/';
-COMPETITORS = '../../csv_data/companies/COMPETITORS/';
+
 
 #list of companies will be parsed from another csv file from S&P list.
 listOfCompanies = {
