@@ -9,7 +9,7 @@ import csv
 #using beautifulsoup module for fetching and parsing html content
 from bs4 import BeautifulSoup
 
-import os, datetime
+import os, datetime, schema
  
 #yahoo finance api link here
 YAHOO_FINANCE_BASE_URL = 'http://ichart.yahoo.com/table.csv?g=w&ignore=.csv'
@@ -62,5 +62,9 @@ for companySymbol,dates in listOfCompanies.iteritems():
         os.makedirs(companyDirectory)
     f = open(companyDirectory+'/' + companySymbol + '_' +dates[0] + '_'+dates[1]+'.csv', 'w')
     companyProfile=getFinanceData(companySymbol, dates[0], dates[1])
+    for i in range(0, data.length-1):
+        #insert into company stock prices table
+        print data[i]
+        schema.insertRows();
     f.writelines(data)
     f.close()    
