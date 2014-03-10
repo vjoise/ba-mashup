@@ -48,7 +48,7 @@ def getFinanceData(stockSymbol, startDate, endDate):
     return requestForData(url);
     
 MARKET_DATA_DIR = '../../csv_data/companies/MARKET/';
-COMPETITORS = '../../csv_data/companies/MARKET/';
+COMPETITORS = '../../csv_data/companies/COMPETITORS/';
 
 #list of companies will be parsed from another csv file from S&P list.
 listOfCompanies = {
@@ -63,7 +63,4 @@ for companySymbol,dates in listOfCompanies.iteritems():
     f = open(companyDirectory+'/' + companySymbol + '_' +dates[0] + '_'+dates[1]+'.csv', 'w')
     companyProfile=getFinanceData(companySymbol, dates[0], dates[1])
     f.writelines(data)
-    f.close()
-    
-    
-    
+    f.close()    
