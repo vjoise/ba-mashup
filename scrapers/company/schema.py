@@ -55,10 +55,13 @@ def insertRows(insertStatementsList) :
                              cur.execute(insertStatement)
                              pass
                         except Exception as e:
-                              #print e
+                              print e
                               pass           
                         
                     con.commit()
 
 def selectRows(selectionQuery, param) :
      return cur.execute(selectionQuery)
+    
+
+#createDbSchema('../../database/schema.sql',False);

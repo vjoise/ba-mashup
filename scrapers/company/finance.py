@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 import os, datetime, schema
  
 #yahoo finance api link here
-YAHOO_FINANCE_BASE_URL = 'http://ichart.yahoo.com/table.csv?g=w&ignore=.csv'
+YAHOO_FINANCE_BASE_URL = 'http://ichart.yahoo.com/table.csv?g=m&ignore=.csv'
 
 #company profile base url
 COMPANY_PROFILE_BASE_URL = 'http://finance.yahoo.com/q/pr?s='
@@ -42,9 +42,11 @@ def getFinanceData(stockSymbol, startDate, endDate):
 
     #The parameters expected by YHOE finance api are as follows:
     a=startDate.split("-")[0];
+    a = str(int(a) - 1)
     b=startDate.split("-")[1];
     c=startDate.split("-")[2];
     d=endDate.split("-")[0];
+    d = str(int(d) - 1)
     e=endDate.split("-")[1];
     f=endDate.split("-")[2];
     
@@ -58,8 +60,12 @@ def getFinanceData(stockSymbol, startDate, endDate):
 
 #list of companies will be parsed from another csv file from S&P list.
 listOfCompanies = {
-                    'GOOG' : ['12-10-2013', '03-10-2014']
+                    'GOOG' : ['04-10-2013', '03-10-2014'],
+                    'AAPL' : ['04-10-2013', '03-10-2014'],
+                    'YHOO' : ['04-10-2013', '03-10-2014']
                   };
+
+schema.createDbSchema('../../database/schema.sql',True);
 
 for companySymbol,dates in listOfCompanies.iteritems():
     data=getFinanceData(companySymbol, dates[0], dates[1])
@@ -68,9 +74,19 @@ for companySymbol,dates in listOfCompanies.iteritems():
         os.makedirs(companyDirectory)
     f = open(companyDirectory+'/' + companySymbol + '_' +dates[0] + '_'+dates[1]+'.csv', 'w')
     companyProfile=getFinanceData(companySymbol, dates[0], dates[1])
-    for i in range(0, data.length-1):
-        #insert into company stock prices table
-        print data[i]
-        schema.insertRows();
+    #insert into company stock prices table
+    #schema.insertRows();
     f.writelines(data)
-    f.close()    
+    f.close()  
+    f1 = open(companyDirectory+'/' + companySymbol + '_' +dates[0] + '_'+dates[1]+'.csv', 'r')
+    insertStatements = []
+    for finData in f1.readlines():
+        finData = finData.split(',')
+        date = finData[0]
+        high = finData[2]
+        low = finData[3]
+        #build insert statements here
+        insertStatement = "INSERT INTO COMPANY_FINANCE(COMPANY_ID, START_DATE, HIGH_PRICE, LOW_PRICE) VALUES( '"+ companySymbol +'\',' + '\''+date +'\''+ ',' + high + ','  + low +")"
+        insertStatements.append(insertStatement)
+    schema.insertRows(insertStatements);
+    
