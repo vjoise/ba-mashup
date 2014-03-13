@@ -63,9 +63,9 @@ def getFinanceData(stockSymbol, startDate, endDate):
     f.close()    
     
     ###########COMPETITOR INFO ############
-    companyDirectory = COMPETITORS_DATA_DIR+companySymbol;
-    if not os.path.exists(companyDirectory):
-        os.makedirs(companyDirectory)
+    competitorDirectory = COMPETITORS_DATA_DIR;
+    if not os.path.exists(competitorDirectory):
+        os.makedirs(competitorDirectory)
     
     competitorUrl = COMPANY_PROFILE_BASE_URL + stockSymbol + "+Competitors";
     print "Competitor URL =" + competitorUrl
@@ -77,7 +77,7 @@ def getFinanceData(stockSymbol, startDate, endDate):
         print a.get_text()
     print compNames
     #Insert the finance data of one company into the table
-    f = open(companyDirectory+'/' + companySymbol + '_' +dates[0] + '_'+dates[1]+'.csv', 'w')
+    f = open(competitorDirectory +'/CompetitorData.csv' , 'w')
     f.writelines(stockData)
     f.close() 
     
@@ -90,6 +90,36 @@ listOfCompanies = {
                     'GOOG' : ['12-10-2013', '03-10-2014']
                   };
 
+
+#list of companies will be parsed from another csv file from S&P list.
+listOfCompanies = {
+                    'GOOG' : ['04-10-2013', '03-10-2014'],
+                    'AAPL' : ['04-10-2013', '03-10-2014'],
+                    'YHOO' : ['04-10-2013', '03-10-2014']
+                  };
+
+schema.createDbSchema('../../database/schema.sql',True);
+
 for companySymbol,dates in listOfCompanies.iteritems():
-    getFinanceData(companySymbol, dates[0], dates[1])
+    data=getFinanceData(companySymbol, dates[0], dates[1])
+    companyDirectory = MARKET_DATA_DIR+companySymbol;
+    if not os.path.exists(companyDirectory):
+        os.makedirs(companyDirectory)
+    f = open(companyDirectory+'/' + companySymbol + '_' +dates[0] + '_'+dates[1]+'.csv', 'w')
+    companyProfile=getFinanceData(companySymbol, dates[0], dates[1])
+    #insert into company stock prices table
+    #schema.insertRows();
+    f.writelines(data)
+    f.close()  
+    f1 = open(companyDirectory+'/' + companySymbol + '_' +dates[0] + '_'+dates[1]+'.csv', 'r')
+    insertStatements = []
+    for finData in f1.readlines():
+        finData = finData.split(',')
+        date = finData[0]
+        high = finData[2]
+        low = finData[3]
+        #build insert statements here
+        insertStatement = "INSERT INTO COMPANY_FINANCE(COMPANY_ID, START_DATE, HIGH_PRICE, LOW_PRICE) VALUES( '"+ companySymbol +'\',' + '\''+date +'\''+ ',' + high + ','  + low +")"
+        insertStatements.append(insertStatement)
+    schema.insertRows(insertStatements);
     
