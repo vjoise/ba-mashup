@@ -15,7 +15,7 @@ import os, datetime, schema
 YAHOO_FINANCE_BASE_URL = 'http://ichart.yahoo.com/table.csv?g=w&ignore=.csv'
 
 #company profile base url
-COMPANY_PROFILE_BASE_URL = 'http://finance.yahoo.com/q/pr?s='
+COMPANY_PROFILE_BASE_URL = 'http://finance.yahoo.com/q/co?s='
 
 def requestForData(url) :
     req = urllib2.Request(url)
@@ -36,7 +36,11 @@ def getFinanceData(stockSymbol, startDate, endDate):
     
     # DIRECTORY PATH 
     MARKET_DATA_DIR = '../../csv_data/companies/MARKET/';
-    COMPETITORS     = '../../csv_data/companies/COMPETITORS/';
+    COMPETITORS_DATA_DIR  = '../../csv_data/companies/COMPETITORS/';
+
+    companyDirectory = MARKET_DATA_DIR+companySymbol;
+    if not os.path.exists(companyDirectory):
+        os.makedirs(companyDirectory)
 
     ###########STOCK INFO##################
 
@@ -48,11 +52,36 @@ def getFinanceData(stockSymbol, startDate, endDate):
     e=endDate.split("-")[1];
     f=endDate.split("-")[2];
     
-    url = YAHOO_FINANCE_BASE_URL +"&s="+ stockSymbol;
-    url += '&a=' +a +'&b=' +b +'&c='+c;
-    url += '&d=' +d +'&e=' +e +'&f='+f;
-    print url
-    return requestForData(url);
+    stockUrl = YAHOO_FINANCE_BASE_URL +"&s="+ stockSymbol;
+    stockUrl += '&a=' +a +'&b=' +b +'&c='+c;
+    stockUrl += '&d=' +d +'&e=' +e +'&f='+f;
+    print "Stock URL =" + stockUrl
+    stockData = requestForData(stockUrl)
+    #Insert the finance data of one company into the table
+    f = open(companyDirectory+'/' + companySymbol + '_' +dates[0] + '_'+dates[1]+'.csv', 'w')
+    f.writelines(stockData)
+    f.close()    
+    
+    ###########COMPETITOR INFO ############
+    companyDirectory = COMPETITORS_DATA_DIR+companySymbol;
+    if not os.path.exists(companyDirectory):
+        os.makedirs(companyDirectory)
+    
+    competitorUrl = COMPANY_PROFILE_BASE_URL + stockSymbol + "+Competitors";
+    print "Competitor URL =" + competitorUrl
+    competitorData = requestForData(competitorUrl)
+    #print  competitorData
+    competitorData = BeautifulSoup(str(competitorData))
+    
+    for a in competitorData.find_all("th",{"class" : "yfnc_tablehead1"}) :
+        print a.get_text()
+    print compNames
+    #Insert the finance data of one company into the table
+    f = open(companyDirectory+'/' + companySymbol + '_' +dates[0] + '_'+dates[1]+'.csv', 'w')
+    f.writelines(stockData)
+    f.close() 
+    
+    
     
 
 
@@ -62,15 +91,5 @@ listOfCompanies = {
                   };
 
 for companySymbol,dates in listOfCompanies.iteritems():
-    data=getFinanceData(companySymbol, dates[0], dates[1])
-    companyDirectory = MARKET_DATA_DIR+companySymbol;
-    if not os.path.exists(companyDirectory):
-        os.makedirs(companyDirectory)
-    f = open(companyDirectory+'/' + companySymbol + '_' +dates[0] + '_'+dates[1]+'.csv', 'w')
-    companyProfile=getFinanceData(companySymbol, dates[0], dates[1])
-    for i in range(0, data.length-1):
-        #insert into company stock prices table
-        print data[i]
-        schema.insertRows();
-    f.writelines(data)
-    f.close()    
+    getFinanceData(companySymbol, dates[0], dates[1])
+    
