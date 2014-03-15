@@ -41,7 +41,7 @@ def main():
 
     fname = 'ceolisting_final.csv'
     reader = csv.reader(open(fname, 'rU'), dialect='excel')
-    fopen = csv.writer(open("ceoprofile_final111111.csv",'w'))
+    fopen = csv.writer(open("ceoprofile_final_one.csv",'w'))
 
 
     for ceolink in reader:
@@ -49,6 +49,16 @@ def main():
         if ceolink[3] is not '':            
             print 'Crawling people from :' + ceolink[3] 
             item = []
+            name = ''
+            jobTitle = ''
+            worksFor = ''
+            alumniOf = ''
+            age = ''
+            totalCompensation = ''
+            desc = ''
+            workLocation = ''
+            affiliationsStr = ''
+
             profile_html = webscrape(ceolink[3])
             soup = BeautifulSoup(profile_html)
             keyExecs = soup.find("div", {'itemtype' : 'http://schema.org/Person'})
