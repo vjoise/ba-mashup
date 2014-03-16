@@ -3,8 +3,8 @@ import urllib2
 #time is needed to pause while fetching the data, as it may affect the performance of server.
 import time
  
-#import csv for processing
-import csv
+#import csv and xlrd for processing
+import csv,xlrd
  
 #using beautifulsoup module for fetching and parsing html content
 from bs4 import BeautifulSoup
@@ -29,7 +29,7 @@ def getCompanyProfileData(stockSymbol):
     print url
     return requestForData(url);
     
-def insertIntoDB(csvfile) :
+def insertIntoDB(csvfile,stkSymbol) :
     f1 = open(csvfile, 'r')
     insertStatements = []
     for finData in f1.readlines():
@@ -38,7 +38,7 @@ def insertIntoDB(csvfile) :
         high = finData[2]
         low = finData[3]
         #build insert statements here
-        insertStatement = "INSERT INTO COMPANY_FINANCE(COMPANY_ID, START_DATE, HIGH_PRICE, LOW_PRICE) VALUES( '"+ companySymbol +'\',' + '\''+date +'\''+ ',' + high + ','  + low +")"
+        insertStatement = "INSERT INTO COMPANY_FINANCE(COMPANY_ID, START_DATE, HIGH_PRICE, LOW_PRICE) VALUES( '"+ stkSymbol +'\',' + '\''+date +'\''+ ',' + high + ','  + low +")"
         insertStatements.append(insertStatement)
     schema.insertRows(insertStatements);
 
@@ -50,7 +50,7 @@ def getFinanceData(stockSymbol, startDate, endDate):
     MARKET_DATA_DIR = '../../csv_data/companies/MARKET/';
     COMPETITORS_DATA_DIR  = '../../csv_data/companies/COMPETITORS/';
 
-    companyDirectory = MARKET_DATA_DIR+companySymbol;
+    companyDirectory = MARKET_DATA_DIR+stockSymbol;
     if not os.path.exists(companyDirectory):
         os.makedirs(companyDirectory)
 
@@ -72,12 +72,12 @@ def getFinanceData(stockSymbol, startDate, endDate):
     print "Stock URL =" + stockUrl
     stockData = requestForData(stockUrl)
     #Insert the finance data of one company into the table
-    f = open(companyDirectory+'/' + companySymbol + '_' +dates[0] + '_'+dates[1]+'.csv', 'w')
+    f = open(companyDirectory+'/' + stockSymbol + '_' +startDate + '_'+endDate+'.csv', 'w')
     f.writelines(stockData)
     f.close()    
     
     #Company data
-    insertIntoDB(companyDirectory+'/' + companySymbol + '_' +dates[0] + '_'+dates[1]+'.csv');
+    insertIntoDB(companyDirectory+'/' + stockSymbol + '_' +startDate + '_'+endDate+'.csv',stockSymbol);
     
     ###########COMPETITOR INFO ############
     competitorDirectory = COMPETITORS_DATA_DIR;
@@ -87,15 +87,21 @@ def getFinanceData(stockSymbol, startDate, endDate):
     competitorUrl = COMPANY_PROFILE_BASE_URL + stockSymbol + "+Competitors";
     print "Competitor URL =" + competitorUrl
     competitorData = requestForData(competitorUrl)
+    competitorList = []
     #print  competitorData
     competitorData = BeautifulSoup(str(competitorData))
     
     for a in competitorData.find_all("th",{"class" : "yfnc_tablehead1"}) :
-        print a.get_text()
-    print compNames
+        if 'PVT' in a.get_text():
+            pass
+        else:
+            if 'Industry' in a.get_text():
+                break;
+            competitorList.append(stockSymbol + ',' + a.get_text()+'\n')
+    #print compNames
     #Insert the finance data of one company into the table
-    f = open(competitorDirectory +'/CompetitorData.csv' , 'w')
-    f.writelines(stockData)
+    f = open(competitorDirectory +'/CompetitorData.csv' , 'a')
+    f.writelines(competitorList)
     f.close() 
     
     
@@ -110,7 +116,16 @@ listOfCompanies = {
 
 schema.createDbSchema('../../database/schema.sql',True);
 
-for companySymbol,dates in listOfCompanies.iteritems():
-    data=getFinanceData(companySymbol, dates[0], dates[1])
-    
-    
+
+#######  STARTING CSVs #######
+COMPANY_DIR = '../../starting_csv';
+ceoProfilexls = COMPANY_DIR + '/' + 'ceolisting_final' + '.csv'
+company_file = open(ceoProfilexls , 'r')
+print company_file;
+data = []
+for CEOData in company_file.readlines():
+    #print CEOData
+    data = CEOData.split(',')
+    getFinanceData(data[1], data[len(data) -2], data[len(data)-1])
+        
+
