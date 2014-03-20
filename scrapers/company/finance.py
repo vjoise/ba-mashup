@@ -104,15 +104,6 @@ def getFinanceData(stockSymbol, startDate, endDate):
     f.writelines(competitorList)
     f.close() 
     
-    
-
-
-#list of companies will be parsed from another csv file from S&P list.
-listOfCompanies = {
-                    'GOOG' : ['04-10-2013', '03-10-2014'],
-                    'AAPL' : ['04-10-2013', '03-10-2014'],
-                    'YHOO' : ['04-10-2013', '03-10-2014']
-                  };
 
 schema.createDbSchema('../../database/schema.sql',True);
 
