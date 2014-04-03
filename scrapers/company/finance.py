@@ -4,7 +4,7 @@ import urllib2
 import time
  
 #import csv and xlrd for processing
-import csv,xlrd
+import csv,xlrd, re
  
 #using beautifulsoup module for fetching and parsing html content
 from bs4 import BeautifulSoup
@@ -17,13 +17,16 @@ YAHOO_FINANCE_BASE_URL = 'http://ichart.yahoo.com/table.csv?g=w&ignore=.csv'
 #company profile base url
 COMPANY_PROFILE_BASE_URL = 'http://finance.yahoo.com/q/co?s='
 
+COMPANY_REVENUE_BASE_URL = 'http://fundamentals.nasdaq.com/redpage.asp?'
+
 def requestForData(url) :
     req = urllib2.Request(url)
     response = urllib2.urlopen( req )
     data = response.read()
     return data
 
-#this appends s=GOOG for gathering company profile
+
+#this appends selected=GOOG for gathering company revenue
 def getCompanyProfileData(stockSymbol):
     url = COMPANY_PROFILE_BASE_URL + stockSymbol;
     print url
@@ -102,7 +105,18 @@ def getFinanceData(stockSymbol, startDate, endDate):
     #Insert the finance data of one company into the table
     f = open(competitorDirectory +'/CompetitorData.csv' , 'a')
     f.writelines(competitorList)
-    f.close() 
+    f.close()
+    
+    
+    #################COMPANY REVENUE###################
+    #Consider only last 10 years data
+    #A single page consists of revenue data for 3 years.
+    #for page in range(1, 4):
+    #    revenue = 0;
+    #    url = COMPANY_REVENUE_BASE_URL +  'selected='+ stockSymbol + '&page=' + str(page);
+    #    data = requestForData(url)
+    #    parseRevenueData()
+    ###################################################
     
 
 schema.createDbSchema('../../database/schema.sql',True);
@@ -118,5 +132,46 @@ for CEOData in company_file.readlines():
     #print CEOData
     data = CEOData.split(',')
     getFinanceData(data[1], data[len(data) -2], data[len(data)-1])
-        
 
+
+##this appends s=GOOG for gathering company profile
+#MONTHS = ['March', 'June', 'September', 'December'];
+#
+#def remove_ascii(text):
+#   return ''.join([i if ord(i) < 128 else ' ' for i in text])
+#
+#def parseRevenueData(html, startYear):
+#    temp = []
+#    revenueMatrix = {}
+#    tempMatrix = {}
+#    count = 0;
+#    for tr in html.find_all('tr'):
+#        columnNumber = 0
+#        for td in tr.find_all('td', {'class':'body1' , 'nowrap':'nowrap'}) :
+#            b = td.find('b')
+#            #print td;
+#            if b is not None:
+#                #this is the month part
+#                print b
+#            else :
+#                if td.has_key('align') and str(remove_ascii(td.string)).startswith('$') :
+#                    print columnNumber
+#                    temp.append(str(remove_ascii(td.string))[1:])
+#            tempMatrix[columnNumber] = temp
+#            columnNumber = columnNumber + 1
+#                    
+#    print tempMatrix
+#    count=3
+#    for i in xrange(startYear, startYear-3, -1):
+#         revenueMatrix[i] = temp[len(temp) - count];
+#         count = count - 1;
+#                        
+#currentYear = 2013
+#for page in range(5, 7):
+#        revenue = 0;
+#        stockSymbol = 'mmm'
+#        url = COMPANY_REVENUE_BASE_URL +  'selected=mmm&page=' + str(page+1);
+#        data = requestForData(url)
+#        if BeautifulSoup(data).find('td', {'class':'body1' , 'nowrap':'nowrap'}) is None :
+#            break;
+#        parseRevenueData(BeautifulSoup(str(data)), currentYear-page*3)
