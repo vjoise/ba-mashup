@@ -4,7 +4,7 @@ import urllib2
 import time
  
 #import csv and xlrd for processing
-import csv,xlrd, re
+import csv, re
  
 #using beautifulsoup module for fetching and parsing html content
 from bs4 import BeautifulSoup
@@ -12,12 +12,13 @@ from bs4 import BeautifulSoup
 import os, datetime, schema
  
 #yahoo finance api link here
-YAHOO_FINANCE_BASE_URL = 'http://ichart.yahoo.com/table.csv?g=w&ignore=.csv'
+YAHOO_FINANCE_BASE_URL = 'http://ichart.yahoo.com/table.csv?g=m&ignore=.csv'
 
 #company profile base url
 COMPANY_PROFILE_BASE_URL = 'http://finance.yahoo.com/q/co?s='
 
 COMPANY_REVENUE_BASE_URL = 'http://fundamentals.nasdaq.com/redpage.asp?'
+stockDataUpdated = []
 
 def requestForData(url) :
     req = urllib2.Request(url)
@@ -45,15 +46,17 @@ def insertIntoDB(csvfile,stkSymbol) :
         insertStatements.append(insertStatement)
     schema.insertRows(insertStatements);
 
- 
+
 #this appends s=GOOG with interval of dates(start, end) a=0&b=1&c=2000&d=0&e=31&f=2010 to the above url.
-def getFinanceData(stockSymbol, startDate, endDate):
     
+HeaderData = 0;
+def getFinanceData(stockSymbol, startDate, endDate):
+    global HeaderData;
     # DIRECTORY PATH 
     MARKET_DATA_DIR = '../../csv_data/companies/MARKET/';
     COMPETITORS_DATA_DIR  = '../../csv_data/companies/COMPETITORS/';
 
-    companyDirectory = MARKET_DATA_DIR+stockSymbol;
+    companyDirectory = MARKET_DATA_DIR;
     if not os.path.exists(companyDirectory):
         os.makedirs(companyDirectory)
 
@@ -74,13 +77,33 @@ def getFinanceData(stockSymbol, startDate, endDate):
     stockUrl += '&d=' +d +'&e=' +e +'&f='+f;
     print "Stock URL =" + stockUrl
     stockData = requestForData(stockUrl)
+    headercount = 0;
+    print stockData[0];
+    for data in stockData:
+        if '\n' in data:
+            if headercount == 0:   
+                data = ',' + 'Symbol' + '\n'
+                headercount = headercount + 1;
+            else:
+                data = ',' + stockSymbol + '\n'
+                headercount = 2;
+        if 'D' in data :
+            HeaderData = HeaderData + 1;
+        if HeaderData == 1 :
+            stockDataUpdated.append(data)
+        else:
+            if headercount == 2 or (headercount == 1 and 'Symbol' not in data):
+                stockDataUpdated.append(data)
+        
+            
+    
     #Insert the finance data of one company into the table
-    f = open(companyDirectory+'/' + stockSymbol + '_' +startDate + '_'+endDate+'.csv', 'w')
-    f.writelines(stockData)
+    f = open(companyDirectory+'/' + 'Stock_Data' +'.csv', 'w')
+    f.writelines(stockDataUpdated)
     f.close()    
     
     #Company data
-    insertIntoDB(companyDirectory+'/' + stockSymbol + '_' +startDate + '_'+endDate+'.csv',stockSymbol);
+    #ToDoinsertIntoDB(companyDirectory+'/' + stockSymbol + '_' +startDate + '_'+endDate+'.csv',stockSymbol);
     
     ###########COMPETITOR INFO ############
     competitorDirectory = COMPETITORS_DATA_DIR;
@@ -121,57 +144,56 @@ def getFinanceData(stockSymbol, startDate, endDate):
 
 schema.createDbSchema('../../database/schema.sql',True);
 
-
 #######  STARTING CSVs #######
 COMPANY_DIR = '../../starting_csv';
 ceoProfilexls = COMPANY_DIR + '/' + 'ceolisting_final' + '.csv'
 company_file = open(ceoProfilexls , 'r')
 print company_file;
 data = []
-for CEOData in company_file.readlines():
-    #print CEOData
-    data = CEOData.split(',')
-    getFinanceData(data[1], data[len(data) -2], data[len(data)-1])
-
-
-##this appends s=GOOG for gathering company profile
-#MONTHS = ['March', 'June', 'September', 'December'];
+#for CEOData in company_file.readlines():
+#    #print CEOData
+#    data = CEOData.split(',')
+#    getFinanceData(data[1], data[len(data) -2], data[len(data)-1])
 #
-#def remove_ascii(text):
-#   return ''.join([i if ord(i) < 128 else ' ' for i in text])
-#
-#def parseRevenueData(html, startYear):
-#    temp = []
-#    revenueMatrix = {}
-#    tempMatrix = {}
-#    count = 0;
-#    for tr in html.find_all('tr'):
-#        columnNumber = 0
-#        for td in tr.find_all('td', {'class':'body1' , 'nowrap':'nowrap'}) :
-#            b = td.find('b')
-#            #print td;
-#            if b is not None:
-#                #this is the month part
-#                print b
-#            else :
-#                if td.has_key('align') and str(remove_ascii(td.string)).startswith('$') :
-#                    print columnNumber
-#                    temp.append(str(remove_ascii(td.string))[1:])
-#            tempMatrix[columnNumber] = temp
-#            columnNumber = columnNumber + 1
-#                    
-#    print tempMatrix
-#    count=3
-#    for i in xrange(startYear, startYear-3, -1):
-#         revenueMatrix[i] = temp[len(temp) - count];
-#         count = count - 1;
-#                        
-#currentYear = 2013
-#for page in range(5, 7):
-#        revenue = 0;
-#        stockSymbol = 'mmm'
-#        url = COMPANY_REVENUE_BASE_URL +  'selected=mmm&page=' + str(page+1);
-#        data = requestForData(url)
-#        if BeautifulSoup(data).find('td', {'class':'body1' , 'nowrap':'nowrap'}) is None :
-#            break;
-#        parseRevenueData(BeautifulSoup(str(data)), currentYear-page*3)
+
+#this appends s=GOOG for gathering company profile
+MONTHS = ['March', 'June', 'September', 'December'];
+
+def remove_ascii(text):
+   return ''.join([i if ord(i) < 128 else ' ' for i in text])
+
+def parseRevenueData(html, startYear):
+    temp = []
+    revenueMatrix = {}
+    tempMatrix = {}
+    count = 0;
+    for tr in html.find_all('tr'):
+        columnNumber = 0
+        for td in tr.find_all('td', {'class':'body1' , 'nowrap':'nowrap'}) :
+            b = td.find('b')
+            #print td;
+            if b is not None:
+                #this is the month part
+                print b
+            else :
+                if td.has_key('align') and str(remove_ascii(td.string)).startswith('$') :
+                    print columnNumber
+                    temp.append(str(remove_ascii(td.string))[1:])
+            tempMatrix[columnNumber] = temp
+            columnNumber = columnNumber + 1
+                    
+    print tempMatrix
+    count=3
+    for i in xrange(startYear, startYear-3, -1):
+         revenueMatrix[i] = temp[len(temp) - count];
+         count = count - 1;
+                        
+currentYear = 2013
+for page in range(1, 3):
+        revenue = 0;
+        stockSymbol = 'mmm'
+        url = COMPANY_REVENUE_BASE_URL +  'selected=mmm&page=' + str(page+1);
+        data = requestForData(url)
+        if BeautifulSoup(data).find('td', {'class':'body1' , 'nowrap':'nowrap'}) is None :
+            break;
+        parseRevenueData(BeautifulSoup(str(data)), currentYear-page*3)
