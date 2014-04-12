@@ -45,8 +45,6 @@ def safeGet(key, multiple) :
     return remove_ascii(value);
 ind=0
 for CEOData in profileCSVFile.readlines():
-    if ind == 100:
-        break;
     name = "";
     try :
         data = CEOData.split(',')

@@ -48,30 +48,31 @@ with open(PROFILE_CSV_FILE, 'rU') as csvfile:
     reader = csv.reader(csvfile, delimiter = ',')
     for CEOData in reader :
         name = "";
+        oneRow = "";
         try :
-            #print CEOData
             name = CEOData[1].replace('.','');    
             name = str(name).replace('  ', '_')
             name = str(name).replace(' ', '_')   
             name = name.replace('__', '_').lower();
+            print name
             url = BASE_URL.replace('$username$', name)
             try :
                 js = requestForData(url)
                 dat = json.loads(js);
                 FREEBASE_PROFILE_KEY_MAP[name] = {};
-                CEOData.append(',' +(str(safeGet(dat, '/people/person/gender', False))));
-                CEOData.append(',' +(str(safeGet(dat, '/people/person/date_of_birth', False))));
-                CEOData.append(',' +(str(safeGet(dat, '/people/person/place_of_birth', False))));
-                CEOData.append(',' +(str(safeGet(dat, '/people/person/nationality', True))));
-                CEOData.append(',' +(str(safeGet(dat, '/people/person/employment_history', True))));
-                CEOData.append(',' +(str(safeGet(dat, '/people/person/parents', True))));
-                CEOData.append('\r\n')
+                for item in CEOData:
+                    oneRow += item + ","
+                oneRow +=((str(safeGet(dat, '/people/person/gender', False))));
+                oneRow +=(',' +(str(safeGet(dat, '/people/person/date_of_birth', False))));
+                oneRow +=(',' +(str(safeGet(dat, '/people/person/place_of_birth', False))));
+                oneRow +=(',' +(str(safeGet(dat, '/people/person/nationality', True))));
+                oneRow +=(',' +(str(safeGet(dat, '/people/person/employment_history', True))));
+                oneRow +=(',' +(str(safeGet(dat, '/people/person/parents', True))));
+                oneRow +=('\r\n')
             except Exception as exp :
                 print "data not found ! "  + name
-            print url
-            updatedProfileCSVFile.writelines(CEOData)
+            updatedProfileCSVFile.write(oneRow)            
+            
         except Exception as e:
             print e
         ind = ind + 1
-    #updatedProfileCSVFile.flush();
-    #updatedProfileCSVFile.close();
