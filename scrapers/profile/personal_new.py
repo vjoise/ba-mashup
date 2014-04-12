@@ -61,8 +61,10 @@ with open(PROFILE_CSV_FILE, 'rU') as csvfile:
                 dat = json.loads(js);
                 FREEBASE_PROFILE_KEY_MAP[name] = {};
                 for item in CEOData:
+                    if ',' in item :
+                        item = '"' +item + '"'
                     oneRow += item + ","
-                oneRow +=((str(safeGet(dat, '/people/person/gender', False))));
+                oneRow +=(str(safeGet(dat, '/people/person/gender', False)));
                 oneRow +=(',' +(str(safeGet(dat, '/people/person/date_of_birth', False))));
                 oneRow +=(',' +(str(safeGet(dat, '/people/person/place_of_birth', False))));
                 oneRow +=(',' +(str(safeGet(dat, '/people/person/nationality', True))));
