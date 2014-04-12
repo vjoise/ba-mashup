@@ -41,7 +41,7 @@ def main():
 
     fname = 'ceolisting_final.csv'
     reader = csv.reader(open(fname, 'rU'), dialect='excel')
-    fopen = csv.writer(open("ceoprofile_final_one.csv",'w'))
+    fopen = csv.writer(open("ceoprofile_8Apr.csv",'w'))
 
 
     for ceolink in reader:
@@ -71,7 +71,7 @@ def main():
                 largeDetail = keyExecs.findAll("td",{'class':"largeDetail"})
                 if largeDetail :
                     age = largeDetail[0].text.strip().encode('utf8')
-                    totalCompensation = largeDetail[1].text.strip().split('As of')[0]
+                    totalCompensation = largeDetail[1].text.strip().split('As of')[0].strip('$').replace(',','')
                 description = keyExecs.find("p",{'itemprop':"description"})
                 moredescription = keyExecs.find("span",{"id":"hidden"})
                 if description :
@@ -86,6 +86,7 @@ def main():
                     affiliationList.append(affiliation.text.strip().encode('utf8'))
                 affiliationsStr = "|".join(affiliationList)            
                               
+                item.append(ceolink[1])
                 item.append(name)
                 item.append(jobTitle)
                 item.append(worksFor)
