@@ -3,7 +3,7 @@ import urllib2
 
 BASE_URL = "https://www.googleapis.com/freebase/v1/topic/en/$username$?key=AIzaSyCYxVBpapMmVLRtgPZAmoU3H-wthx2yreQ"
 
-PROFILE_CSV_FILE = "../../starting_csv/ceoprofile_final_latest.csv"
+PROFILE_CSV_FILE = "../../starting_csv/ceoprofile.csv"
 PROFILE_CSV_FILE_UPDATED = "../../starting_csv/ceoprofile_updated.csv"
 
 FREEBASE_PROFILE_KEY_MAP = {}
@@ -45,12 +45,10 @@ def safeGet(key, multiple) :
     return remove_ascii(value);
 ind=0
 for CEOData in profileCSVFile.readlines():
-    #if ind == 10:
-    #    break;
     name = "";
     try :
         data = CEOData.split(',')
-        name = data[0].replace('.','');    
+        name = data[1].replace('.','');    
         name = str(name).replace('  ', '_')
         name = str(name).replace(' ', '_')   
         name = name.replace('__', '_').lower();
@@ -58,6 +56,7 @@ for CEOData in profileCSVFile.readlines():
         js = requestForData(url)
         count += 1;
         dat = json.loads(js);
+        print url
         FREEBASE_PROFILE_KEY_MAP[name] = {};
         CEOData = CEOData.replace('\r\n','')
         print CEOData.count('\r\n')
@@ -68,8 +67,10 @@ for CEOData in profileCSVFile.readlines():
         CEOData += "," + safeGet('/people/person/employment_history', True)
         CEOData += "," + safeGet('/people/person/parents', True)
         CEOData += '\n'
-        updatedProfileCSVFile.writelines([CEOData]);
-    except :
+        updatedProfileCSVFile.write(CEOData);
+    except Exception as e:
         print 'couldn\'t find data for person : ' + name
         pass
     ind = ind + 1
+    updatedProfileCSVFile.flush()
+    updatedProfileCSVFile.close()
