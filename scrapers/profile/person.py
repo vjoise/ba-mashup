@@ -41,7 +41,7 @@ def main():
 
     fname = 'ceolisting_final.csv'
     reader = csv.reader(open(fname, 'rU'), dialect='excel')
-    fopen = csv.writer(open("ceoprofile_8Apr.csv",'w'))
+    fopen = csv.writer(open("ceoprofile_13Apr.csv",'w'))
 
 
     for ceolink in reader:
