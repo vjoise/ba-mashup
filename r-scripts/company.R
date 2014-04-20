@@ -114,7 +114,7 @@ install.packages("ggplot2")
 library(ggplot2)
 install.packages("directlabels")
 library(directlabels)
-
+ 
 uni_sector<-sqldf("select Sector, Performance, Compensation from CEO_DataSet_Final_Sectors")
 dat <- data.frame(X=uni_sector$Sector, Y=uni_sector$Performance, Z=uni_sector$Compensation)
 ggplot(dat,mapping=aes(),groups=factor(uni_sector$Performance)) +  geom_point(aes(x=uni_sector$Sector,y=uni_sector$Performance, color=factor(uni_sector$Compensation)),size=4)
