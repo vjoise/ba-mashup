@@ -1,3 +1,13 @@
+#K Means Plot: FG Vs Salary
+#Select sector data first
+install.packages('gridExtra')
+library(gridExtra)
+install.packages("sqldf")
+library(sqldf)
+install.packages("ggplot2")
+library(ggplot2)
+install.packages("directlabels")
+library(directlabels)
 #######################################
 #COMP Vs Uni
 #######################################
@@ -115,14 +125,197 @@ library(ggplot2)
 install.packages("directlabels")
 library(directlabels)
  
-uni_sector<-sqldf("select Sector, Performance, Compensation from CEO_DataSet_Final_Sectors")
+uni_sector<-sqldf("select Sector, Performance, Compensation from CEO_DataSet")
 dat <- data.frame(X=uni_sector$Sector, Y=uni_sector$Performance, Z=uni_sector$Compensation)
-ggplot(dat,mapping=aes(),groups=factor(uni_sector$Performance)) +  geom_point(aes(x=uni_sector$Sector,y=uni_sector$Performance, color=factor(uni_sector$Compensation)),size=4)
+#ggplot(dat,mapping=aes(),groups=factor(uni_sector$Performance)) +  geom_point(aes(x=uni_sector$Sector,y=uni_sector$Performance, color=factor(uni_sector$Compensation)),size=4)
+options("scipen"=10000, "digits"=6)
+#ggplot(dat, aes(x = Z/1000000, y = Y, colour = X, shape=X )) + geom_point(size=5) + facet_grid(shrink=TRUE, ~ X) + scale_shape_manual(values=uni_sector$Sector) +coord_cartesian(ylim = c(0, 4), xlim=c(0, 40)) +xlab(label='Compensation in Milliions') + ylab(label='Performance via Earnings per share')
+  ggplot(dat, aes(x = Z/1000000, y = Y, colour = X, )) + 
+      geom_point(size=5,) + facet_grid(space="free_x",shrink=TRUE, ~ X, margins=TRUE)+
+    coord_cartesian(ylim = c(-10, 10), xlim=c(0, 40)) +
+    xlab(label='Compensation in Milliions') + 
+    ylab(label='Performance (Earnings/Share)')+
+  scale_colour_hue(name = "Sectors")+
+  theme(legend.key = element_rect(colour = "lightblue"))
+  
+#######################################
+# Sector Vs Compensation vs Performance
+#######################################
+uni_sector<-sqldf("select Sector, Performance, Compensation from CEO_DataSet")
+dat <- data.frame(X=uni_sector$Sector, Y=uni_sector$Performance, Z=uni_sector$Compensation)
+options("scipen"=10000, "digits"=6)
+ggplot(dat, aes(x = Z/1000000, y = Y, colour = X, )) + 
+  geom_point(size=5,) + facet_grid(space="free_x",shrink=TRUE, ~ X, margins=TRUE)+
+  coord_cartesian(ylim = c(-10, 10), xlim=c(0, 40)) +
+  xlab(label='Compensation in Milliions') + 
+  ylab(label='Performance (Earnings/Share)')+
+  scale_colour_hue(name = "Sectors")+
+  theme(legend.key = element_rect(colour = "lightblue"))
 
+#######################################
+# University Vs Compensation vs Performance
+#######################################
+uni_sector<-sqldf("select University, Performance, Compensation from CEO_DataSet where University in (select University  from CEO_DataSet where University <> 'NA' group by University order by count(University) desc limit 10)")
+dat <- data.frame(X=uni_sector$University, Y=uni_sector$Performance, Z=uni_sector$Compensation)
+ggplot(dat, aes(x = Z/1000000, y = Y, colour = X, )) + 
+  geom_point(size=5,) + facet_grid(space="free_x",shrink=TRUE, ~ X, margins=TRUE)+
+  coord_cartesian(ylim = c(-10, 10), xlim=c(0, 40)) +
+  xlab(label='Compensation in Milliions') + 
+  ylab(label='Performance (Earnings/Share)')+
+  scale_colour_hue(name = "Universities")+
+  theme(legend.key = element_rect(colour = "lightblue"))
 
-library(ggplot2)
-uni_sector$Compensation <- factor(uni_sector$Compensation)
-subset(CEO_DataSet_Final_Sectors,select=c(Sector, Starting_Age))
-boxplot(x=uni_sector,col=uni_sector$Performance, subset=)
-ggplot(dat,aes(x=uni_sector$Sector,y=uni_sector$Compensation,colour=uni_sector$Performance)) + geom_boxplot(aes(fill=uni_sector$Performance)) + coord_cartesian(ylim=20:50)
-ggplot(dat,aes(x=uni_sector$Sector,y=uni_sector$Compensation,colour=uni_sector$Performance, group=1)) + geom_point() + scale_y_discrete(breaks=(seq(0,50000000, by=10000000)))
+#######################################
+# Market Data Vs CEO Tenure
+#######################################
+stockData<-matrix(data=NA,ncol=4,dimnames=list(c(), c("Symbol", "Performance")))
+as.data.frame(Stock_Data)
+for(row in 1:len){
+  sumOfEPS = 0
+  stockData[row, 'Symbol'] = as.character(EPS_Growth[row, 'Symbol'])
+}
+sqldf("select * from Stock_Data where  Symbol in('GOOG') ")
+#stock_tenure<-sqldf("select substr(stock.Date,6,2) Market_Month,substr(stock.Date,0,5) Market_Year, ceo.Symbol, ceo.Tenure_To, stock.Value, ceo.Tenure_From from CEO_DataSet ceo, Stock_Data stock where 
+#                  ceo.Symbol = stock.Symbol and ceo.Symbol in(select Symbol from CEO_Data ceo_data limit 10)
+#              and trim(substr(stock.Date,0,5)) between trim(ceo.Tenure_From) and trim(ceo.Tenure_To)")
+Stock_Data <- read.csv("~/ba-mashup/csv_data/companies/MARKET/Stock_Data.csv")
+CEO_DataSet <- read.csv("~/ba-mashup/csv_data/profile/CEO_DataSet.csv")
+par(mfrow=c(1,5))
+
+#sym<-sqldf("select distinct Symbol from Stock_Data stock where substr(stock.Date,0,5) < '2005' and Symbol <> 'MMM' limit 5")
+#for(i in sym){
+  #print(as.character(i))
+ i='BAC'
+  stock_tenure<-sqldf(sprintf("select Name, substr(stock.Date,6,2) Market_Month,substr(stock.Date,0,5) Market_Year, ceo.Symbol, ceo.Tenure_To, stock.Value, ceo.Tenure_From from CEO_DataSet ceo, Stock_Data stock where 
+                  ceo.Symbol = stock.Symbol and ceo.Symbol = '%s'  order by Performance desc", i))
+  dat <- data.frame(X=stock_tenure$Market_Month, Y=stock_tenure$Value, Z=stock_tenure$Market_Year, W=stock_tenure$Symbol, N=stock_tenure$Name)
+  s<-subset(dat,( (dat$Z==2011) & (dat$X=='01') & (dat$N == stock_tenure$Name)))
+  a<-aes(x = dat$X, y = dat$Y, group=dat$Z, color='darkblue',fill = 'red')
+  b<-aes(x = '01', y = max(dat$Y), group=s$Z, color='darkblue', fill = 'red', label=s$N)
+  png("Dropbox/IS5126_Projects/Screenshots/BAC.png",1000,800)
+  ggplot(dat, a) + 
+    geom_area() +
+    facet_wrap(shrink=TRUE, W ~ Z)+
+   facet_grid(shrink=TRUE, W ~ Z)+
+    coord_cartesian(ylim=c(0,max(dat$Y)+20)) +
+    xlab(label='Market date') + 
+    ylab(label='Market Price/$')+
+    geom_text(data=s, b, color='blue')
+  dev.off()
+i='RRC'
+stock_tenure<-sqldf(sprintf("select Name, substr(stock.Date,6,2) Market_Month,substr(stock.Date,0,5) Market_Year, ceo.Symbol, ceo.Tenure_To, stock.Value, ceo.Tenure_From from CEO_DataSet ceo, Stock_Data stock where 
+                  ceo.Symbol = stock.Symbol and ceo.Symbol = '%s'  order by Performance desc", i))
+dat <- data.frame(X=stock_tenure$Market_Month, Y=stock_tenure$Value, Z=stock_tenure$Market_Year, W=stock_tenure$Symbol, N=stock_tenure$Name)
+s<-subset(dat,( (dat$Z==stock_tenure$Tenure_From) & (dat$X=='01') & (dat$N == stock_tenure$Name)))
+a<-aes(x = dat$X, y = dat$Y, group=dat$Z, color='darkblue',fill = 'red')
+b<-aes(x = '01', y = max(dat$Y), group=s$Z, color='darkblue', fill = 'red', label=s$N)
+png("Dropbox/IS5126_Projects/Screenshots/RRC.png",1000,800)
+
+ggplot(dat, a) + 
+  geom_area() +
+  facet_wrap(shrink=TRUE, W ~ Z)+
+  facet_grid(shrink=TRUE, W ~ Z)+
+  coord_cartesian(ylim=c(0,max(dat$Y)+20)) +
+  xlab(label='Market date') + 
+  ylab(label='Market Price/$')+
+  geom_text(data=s, b, color='blue')
+dev.off()
+i='FB'
+stock_tenure<-sqldf(sprintf("select Name, substr(stock.Date,6,2) Market_Month,substr(stock.Date,0,5) Market_Year, ceo.Symbol, ceo.Tenure_To, stock.Value, ceo.Tenure_From from CEO_DataSet ceo, Stock_Data stock where 
+                  ceo.Symbol = stock.Symbol and ceo.Symbol = '%s'  order by Performance desc", i))
+dat <- data.frame(X=stock_tenure$Market_Month, Y=stock_tenure$Value, Z=stock_tenure$Market_Year, W=stock_tenure$Symbol, N=stock_tenure$Name)
+s<-subset(dat,( (dat$Z==2012) & (dat$X=='05') & (dat$N == stock_tenure$Name)))
+a<-aes(x = dat$X, y = dat$Y, group=dat$Z, color='darkblue',fill = 'lightblue')
+b<-aes(x = '05', y = 100, group='2012', color='darkblue', fill = 'lightblue', label=s$N)
+png("Dropbox/IS5126_Projects/Screenshots/Facebook.png",1000,800)
+ ggplot(dat, a) + 
+  geom_area() +
+  facet_wrap(shrink=TRUE, W ~ Z)+
+  facet_grid(shrink=TRUE, W ~ Z)+
+  coord_cartesian(ylim=c(0,200)) +
+  xlab(label='Market date') + 
+  ylab(label='Market Price/$')+
+  geom_text(data=s, b, color='blue')
+dev.off()
+#grid.arrange(p1,p2)
+
+i='VZ'
+stock_tenure<-sqldf(sprintf("select Name, substr(stock.Date,6,2) Market_Month,substr(stock.Date,0,5) Market_Year, ceo.Symbol, ceo.Tenure_To, stock.Value, ceo.Tenure_From from CEO_DataSet ceo, Stock_Data stock where 
+                  ceo.Symbol = stock.Symbol and ceo.Symbol = '%s'  order by Performance desc", i))
+dat <- data.frame(X=stock_tenure$Market_Month, Y=stock_tenure$Value, Z=stock_tenure$Market_Year, W=stock_tenure$Symbol, N=stock_tenure$Name)
+s<-subset(dat,( (dat$Z==stock_tenure$Tenure_From) & (dat$X=='01') & (dat$N == stock_tenure$Name)))
+a<-aes(x = dat$X, y = dat$Y, group=dat$Z, color='darkblue',fill = 'cyan')
+b<-aes(x = '06', y = max(dat$Y), group=s$Z, color='darkblue', fill = 'cyan', label=s$N)
+  png("Dropbox/IS5126_Projects/Screenshots/Verizon.png",1000,800)
+ggplot(dat, a) + 
+  geom_area() +
+  facet_wrap(shrink=TRUE, W ~ Z)+
+  facet_grid(shrink=TRUE, W ~ Z)+
+  coord_cartesian(ylim=c(0,max(dat$Y)+20)) +
+  xlab(label='Market date') + 
+  ylab(label='Market Price/$')+
+  #theme(legend.key = element_rect(colour = "lightblue")) + 
+  geom_text(data=s, b, color='blue')
+dev.off()
+i='MAS'
+stock_tenure<-sqldf(sprintf("select Name, substr(stock.Date,6,2) Market_Month,substr(stock.Date,0,5) Market_Year, ceo.Symbol, ceo.Tenure_To, stock.Value, ceo.Tenure_From from CEO_DataSet ceo, Stock_Data stock where 
+                  ceo.Symbol = stock.Symbol and ceo.Symbol = '%s'  order by Performance desc", i))
+dat <- data.frame(X=stock_tenure$Market_Month, Y=stock_tenure$Value, Z=stock_tenure$Market_Year, W=stock_tenure$Symbol, N=stock_tenure$Name)
+s<-subset(dat,( (dat$Z==stock_tenure$Tenure_From) & (dat$X=='01') & (dat$N == stock_tenure$Name)))
+a<-aes(x = dat$X, y = dat$Y, group=dat$Z, color='darkblue',fill = 'green')
+b<-aes(x = '06', y = max(dat$Y), group=s$Z, color='darkblue', fill = 'green', label=s$N)
+png("Dropbox/IS5126_Projects/Screenshots/MASCO.png",1000,800)
+
+ggplot(dat, a) + 
+  geom_area() +
+  facet_wrap(shrink=TRUE, W ~ Z)+
+  facet_grid(shrink=TRUE, W ~ Z)+
+  coord_cartesian(ylim=c(0,max(dat$Y)+20)) +
+  xlab(label='Market date') + 
+  ylab(label='Market Price/$')+
+  geom_text(data=s, b, color='blue')
+dev.off()
+i='AAPL'
+stock_tenure<-sqldf(sprintf("select Name, substr(stock.Date,6,2) Market_Month,substr(stock.Date,0,5) Market_Year, ceo.Symbol, ceo.Tenure_To, stock.Value, ceo.Tenure_From from CEO_DataSet ceo, Stock_Data stock where 
+                  ceo.Symbol = stock.Symbol and ceo.Symbol = '%s'  order by Performance desc", i))
+dat <- data.frame(X=stock_tenure$Market_Month, Y=stock_tenure$Value, Z=stock_tenure$Market_Year, W=stock_tenure$Symbol, N=stock_tenure$Name)
+s<-subset(dat,( (dat$Z==stock_tenure$Tenure_From) & (dat$X=='01') & (dat$N == stock_tenure$Name)))
+a<-aes(x = dat$X, y = dat$Y, group=dat$Z, color='darkblue',fill = 'yellow')
+b<-aes(x = '06', y = max(dat$Y), group=s$Z, color='darkblue', fill = 'yellow', label=s$N)
+#png("Dropbox/IS5126_Projects/Screenshots/Apple.png",1080,900)
+ggplot(dat, a) + 
+  geom_area() +
+  facet_wrap(shrink=TRUE, W ~ Z)+
+  facet_grid(shrink=TRUE, W ~ Z)+
+  coord_cartesian(ylim=c(0,max(dat$Y)+20)) +
+  xlab(label='Market date') + 
+  ylab(label='Market Price/$')+
+  geom_text(data=s, b, color='blue')
+#dev.off()
+#}
+  #annotate("text", x=01, y=100, ,cyl = factor(2009,levels = c("2009")), label="Observed \n value", color = "blue")
+#######################################
+# Regression of Compensation vs Performance
+#######################################
+png("Dropbox/IS5126_Projects/Screenshots/Perf_Comp_Regression.png",1080,900)
+uni_sector<-sqldf("select Performance, Compensation from CEO_DataSet")
+model<-lm(uni_sector$Performance ~ uni_sector$Compensation + uni_sector)
+plot(uni_sector$Compensation, uni_sector$Performance)
+par(mfrow=c(2,2))
+plot(model)
+dev.off()
+model
+
+#######################################
+# Regression of Compensation vs Performance vs Age
+#######################################
+uni_sector<-sqldf("select Performance, Compensation, Age, Bachelors_University from CEO_DataSet where Compensation <> 'NA' and (Bachelors_University<> 'NA' or Masters_University <> 'NA') order by Performance desc")
+model<-glm(uni_sector$Performance ~ uni_sector$Age + uni_sector$Compensation)
+summary(model)
+par(mfrow=c(2,2))
+plot(model)
+dev.off()
+
+log_df<-data.frame(uni=uni_sector$Bachelors_University, perf=uni_sector$Performance, age=uni_sector$Age)
+log<-glm(log_df$perf ~ log_df$age + log_df$uni,  family=binomial())
+summary(log)
