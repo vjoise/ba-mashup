@@ -44,11 +44,11 @@ barplot(a$avg, main="Universities",ylab="Count", names.arg=xf, border="blue", ce
 #Popular universities vs Compensation
 ######################################
 
-sqldf("select ceo.Name, ceo.symbol, stock.Date, stock.Close, (stock.open - stock.Close) from CEO_DataSet_Final ceo, Stock_Data stock where ceo.symbol = stock.symbol and university='Harvard University' group by ceo.symbol")
-summary(CEO_DataSet_Final)
+sqldf("select ceo.Name, ceo.symbol, stock.Date, stock.Close, (stock.open - stock.Close) from CEO_DataSet ceo, Stock_Data stock where ceo.symbol = stock.symbol and university='Harvard University' group by ceo.symbol")
+summary(CEO_DataSet)
 options("scipen"=100, "digits"=4)
 par(las=1) 
-xf<-factor(a$university) 
+xf<-factor(a$University) 
 barplot(a$avg, main="Universities",ylab="Count", names.arg=xf, border="blue", cex.names=0.75, col=c("lightblue"), cex.axis=1)
 View(Stock_Data)
 
@@ -309,13 +309,39 @@ model
 #######################################
 # Regression of Compensation vs Performance vs Age
 #######################################
-uni_sector<-sqldf("select Performance, Compensation, Age, Bachelors_University from CEO_DataSet where Compensation <> 'NA' and (Bachelors_University<> 'NA' or Masters_University <> 'NA') order by Performance desc")
-model<-glm(uni_sector$Performance ~ uni_sector$Age + uni_sector$Compensation)
+uni_sector<-sqldf("select Performance, Compensation, Age, Revenue, Bachelors_University from CEO_DataSet where Compensation <> 'NA' and (Bachelors_University<> 'NA' or Masters_University <> 'NA') order by Performance desc")
+model<-lm(uni_sector$Performance ~ uni_sector$Revenue)
 summary(model)
 par(mfrow=c(2,2))
 plot(model)
 dev.off()
 
 log_df<-data.frame(uni=uni_sector$Bachelors_University, perf=uni_sector$Performance, age=uni_sector$Age)
-log<-glm(log_df$perf ~ log_df$age + log_df$uni,  family=binomial())
+log<-glm(log_df$perf ~ log_df$age + log_df$Compensation,  family=binomial())
 summary(log)
+
+Revenue_Data <- read.csv("~/ba-mashup/csv_data/companies/MARKET/Revenue_Data.csv", header=F)
+Revenue_Data
+Rev<-sqldf("select V2,V3,V4 from Revenue_Data where V1 = 'MMM' ")
+summary(Rev)
+
+######################################
+#Regression on Age Vs Revenue with Performance
+######################################
+for(i in 1:length(Revenue_Data)){
+  print(Revenue_Data[i])
+}
+uni_sector_b<-sqldf("select b, count(*) cb from (select Bachelors_University b from CEO_DataSet order by Performance desc limit 100) group by b")
+uni_sector_m<-sqldf("select m, count(*) from (select Masters_University m from CEO_DataSet order by Performance desc limit 100)  group by m")
+all_uni<-sqldf("select b, sum(cb) s from (select * from uni_sector_b union  select * from uni_sector_m) where b <> 'NA' group by b having s > 1")
+
+xf=factor(all_uni$b)
+par(las=2)
+par(mar=c(8,2,1,0))
+barplot(all_uni$s, main="Universities of Top 100 performing CEOs",ylab="Count", names.arg=xf, border="blue", cex.names=0.75, col=c("lightblue"), cex.axis=1)
+
+
+wharton<-sqldf("select count(*) from CEO_DataSet Bachelors_University where Bachelors_University in ('Wharton University') or Masters_University in ('Wharton University')")
+bs_degree<-sqldf("select count(*) from CEO_DataSet where Bachelors_Specialization in ('BS') and Masters_Specialization in ('MS')")
+comp_bs_degree<-sqldf("select Bachelors_Specialization, avg(Compensation) avg from CEO_DataSet  where Bachelors_Specialization in ('BS') and Masters_Specialization in ('NA')")
+comp_mba_degree<-sqldf("select Masters_Specialization, avg(Compensation) avg from CEO_DataSet  where Masters_Specialization in ('MBA')")
