@@ -16,7 +16,7 @@
 ######################################################
 ##
 ##Read file
-ceo_profile<-read.csv("/Users/vinutha/IS5126/ba-mashup/csv_data/profile/CEO_DataSet.csv",header=T,sep=",")
+ceo_profile<-read.csv("~/ba-mashup/csv_data/profile/CEO_DataSet.csv",header=T,sep=",")
 
 #selection of columns necessary
 join_string <- "select
@@ -76,11 +76,15 @@ barplot(table(ceo_data$Sector),ylab = 'Count',las=2)
 summary(glm(formula=ceo_data$Age ~ ceo_data$Gender + ceo_data$Masters_Specialization + ceo_data$Sector + ceo_data$Bachelors_Specialization))
 summary(glm(formula=ceo_data$Age ~ ceo_data$Performance + ceo_data$Gender + ceo_data$Masters_Specialization + ceo_data$Sector))
 summary(glm(formula=ceo_data$Age ~ ceo_data$Performance + ceo_data$Gender + ceo_data$Sector))
+par(mfrow=c(2,2))
+
+  summary(glm(formula=ceo_data$Performance ~ ceo_data$Nationality + ceo_data$Masters_Specialization + ceo_data$Compensation))
 
 ceo_data$Performance.cat <- bin.var(ceo_data$Performance, bins=4, method='proportions', labels=NULL)
 summary(ceo_data$Performance.cat)
 
 plotmeans(ceo_data$Age~ceo_data$Sector,par(las=2))
+
 
 
 #############
